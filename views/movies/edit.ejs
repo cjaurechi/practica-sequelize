@@ -15,7 +15,7 @@
             <div class="col">
                 <h1>Editar Pelicula</h1>
 
-                <form action="/movies?_method=patch" method="post">
+                <form action="/movies/<%= movie.id %>?_method=PUT" method="POST">
                     <div class="form-group">
                         <label for="">Titulo</label>
                         <input type="text" class="form-control" name="title" value="<%= movie.title %>">

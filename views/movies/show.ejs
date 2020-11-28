@@ -19,9 +19,11 @@
                 <p>Duración: <%= movie.length %></p>
                 <p>Fecha de estreno: <%= movie.release_date %></p>
                 <div class="form-group">
-                    <button class="btn btn-primary">Borrar</button>
-                    <button class="btn btn-primary">Modificar</button>
+                    <a href="/movies/<%= movie.id %>/edit"><button class="btn btn-primary">Modificar</button></a>
                 </div>
+                <form action="/movies/<%= movie.id %>?_method=DELETE" method="POST" >
+                    <button class="btn btn-primary">Borrar</button>
+                </form>
             </div>
         </div>
     </div>

@@ -15,7 +15,7 @@ router.get('/movies', function (req, res) {
       res.render('movies/index', { movies: movies });
     })
     .catch(error => {
-      res.render('error.js', { error: error });
+      res.render('error', { error: error });
     })
 })
 
@@ -26,7 +26,23 @@ router.get('/movies/create', function (req, res) {
       res.render('movies/create', { genres: genres });
     })
     .catch(error => {
-      res.render('error.js', { error: error });
+      res.render('error', { error: error });
+    })
+})
+
+router.post('/movies', function (req, res) {
+  db.movies.create({
+    title: req.body.title,
+    rating: req.body.rating,
+    awards: req.body.awards,
+    release_date: req.body.release_date,
+    genre_id: req.body.genre_id
+  })
+    .then(movies => {
+      res.redirect('movies');
+    })
+    .catch(error => {
+      res.render('error', { error: error });
     })
 })
 
@@ -39,17 +55,23 @@ router.get('/movies/new', function (req, res) {
     .then(movies => {
       res.render('movies/new', { movies: movies })
     })
+    .catch(error => {
+      res.render('error', { error: error });
+    })
 })
 
 router.get('/movies/recommended', function (req, res) {
   // devolver las películas cuyo rating sea mayor o igual a 8 - Ejercicio 4
   db.movies.findAll({
-    where:  {
+    where: {
       rating: { [Op.gte]: 8 }
     }
   })
     .then(movies => {
       res.render('movies/recommended', { movies: movies })
+    })
+    .catch(error => {
+      res.render('error', { error: error });
     })
 })
 
@@ -62,8 +84,8 @@ router.post('/movies/search', function (req, res) {
   // devolver el resultado de la búsqueda de películas - Ejercicio 5
   console.log(req.body);
   db.movies.findAll({
-    where:  {
-      title: { [Op.like]: '%' + req.body.title +'%' },
+    where: {
+      title: { [Op.substring]: req.body.title },
     },
     order: [['title', req.body.order]]
   })
@@ -72,7 +94,7 @@ router.post('/movies/search', function (req, res) {
       res.render('movies/searchresults', { movies: movies });
     })
     .catch(error => {
-      res.render('error', {error: error});
+      res.render('error', { error: error });
     })
 })
 
@@ -88,22 +110,51 @@ router.get('/movies/:id', function (req, res) {
 })
 
 router.get('/movies/:id/edit', function (req, res) {
-  // Creo que tengo que hacer 2 .then? O primero buscar la película, con eso buscar el genre_id y después mostrarlo? (Consultar a Ale/Agus)
-  db.movies.findByPk(req.params.id)
-    .then(movie => {
-      res.render('movies/edit', { genres: [], movie: movie})
+  // Muestra un formulario ya completo con los datos de la película según el id que indica la URL
+  let pedidoPeliculas = db.movies.findByPk(req.params.id);
+  let pedidoGeneros = db.genres.findAll();
+  Promise.all([pedidoPeliculas, pedidoGeneros])
+    .then(function ([movie, genres]) {
+      res.render('movies/edit', { genres: genres, movie: movie })
+    })
+    .catch(error => {
+      res.render('error', { error: error });
     })
 })
 
-// ***************************************************
-
-router.patch('/movies/:id', function (req, res) {
-  // No estoy muy seguro de lo que hace el método patch
-  res.redirect('/movies')
+router.put('/movies/:id', function (req, res) {
+  // Recibe información del formulario mencionado anteriormente y en conjunto con el id que indica la URL actualiza la información de la película
+  db.movies.update({
+    title: req.body.title,
+    rating: req.body.rating,
+    awards: req.body.awards,
+    release_date: req.body.release_date,
+    genre_id: req.body.genre_id
+  },
+    {
+      where: {
+        id: req.params.id
+      }
+    })
+    .then(movie => {
+      res.redirect('/movies/' + req.params.id);
+    })
+    .catch(error => {
+      res.render('error', { error: error });
+    })
 })
 
 router.delete('/movies/:id', function (req, res) {
-  // devolver solo la pelicula especificada por el id
+  // Elimina la película indicada en la URL según el ID
+  db.movies.destroy({
+    where: {
+      id: req.params.id
+    }
+  })
+    .then(res.redirect('/movies'))
+    .catch(error => {
+      res.render('error', { error: error })
+    })
 })
 
 module.exports = router;
